@@ -1,0 +1,49 @@
+---
+title: "PML with Weight Excercises"
+author: "Taiki Sakai"
+date: "October 25, 2015"
+output: html_document
+---
+
+## Model Building
+
+We wish to build a model to predict the method a person is using for
+a particular exercise. Since this is a classification problem, using a
+random forest model seems like a good idea.
+
+First we download our training data, then split it into a new training
+and test set that we can use for cross-validation. The dataset contains a
+number of #DIV/0! errors, so we will replace these values with NA. We will
+then replace these NA values with 0.
+
+```{r}
+setwd('~/Coursera/DS Repo/PML')
+train <- read.csv('training.csv', na.strings=c('NA','#DIV/0!'))
+test <- read.csv('testing.csv',na.strings=c('NA','#DIV/0!'))
+
+library('caret')
+library('dplyr')
+library('randomForest')
+set.seed(141)
+inTrain <- createDataPartition(y=train$classe, p=.7,list=FALSE)
+training <- train[inTrain,]
+testing <- train[-inTrain,]
+
+training[is.na(training)] <- 0
+testing[is.na(testing)] <- 0
+```
+
+Now we can build our model using all the variables and examine our results.
+```{r, cache=TRUE}
+set.seed(9000)
+rfModel <- randomForest(classe~., data=training)
+rfModel
+```
+It appears that our error rate is very low, so this model could be a good
+way to predict the values we are interested in. Let's cross validate this result
+against the testing set that we split off earlier:
+```{r}
+table(predict(rfModel,testing), testing$classe)
+```
+In this table we see that nearly 100% of the values were predicted corrected in the 
+testing set we created, so the model appears to work well.
